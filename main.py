@@ -6,12 +6,22 @@ from socket import *
 TEST_DATE = "Tue, 28 Jul 2026 18:14:00 GMT"
 TEST_VERSION = "HTTP/1.1"
 forbidden_files = ["main.py",".gitignore",".git"]
+
+
 #responses
 forbidden = ( "HTTP/1.1 403 Forbidden\r\n"
     "Content-Type: text/html; charset=utf-8\r\n"
     "Connection: close\r\n"
     "\r\n"
     "<html><body><h1>403 Forbidden - Access Denied</h1></body></html>"
+)
+
+method_not_allowed = ( "HTTP/1.1 405 Method Not Allowed\r\n"
+    "Allow: GET\r\n"
+    "Content-Type: text/html; charset=utf-8\r\n"
+    "Connection: close\r\n"
+    "\r\n"
+    "<html><body><h1>405 Method Not Allowed - Only GET is Supported</h1></body></html>"
 )
 
 not_modified = (
@@ -40,6 +50,16 @@ response_200 = ( "HTTP/1.1 200 OK\r\n"
     "\r\n"
     "<html><body><h1>200 OK - File Successfully Served</h1></body></html>"
 )
+
+#checks if the request is a GET
+#returns True if it is not a GET request
+def check_get(msg):
+    method = msg.split("\r\n", 1)[0].split(" ")[0]
+    if method != "GET":
+        return True
+
+    return False
+
 
 #checks if you message has been modified 
 def check_if_modified(msg, date):
@@ -77,6 +97,7 @@ def check_version(msg,version):
     return False
 
 
+
 #returns (true,file name) if file is in directory
 def check_file(msg):
     #extracts the file name
@@ -90,9 +111,6 @@ def check_file(msg):
 
     return (False,"Not Found")
 
-
-def hol_blocking():
-    print("In progress")
 
 def main():
     serverPort = 12000
@@ -108,6 +126,12 @@ def main():
         #assume we are only getting GET requests
         message = connectionSocket.recv(1024).decode()
         if not message.strip():
+            connectionSocket.close()
+            continue
+
+        #check if get
+        if check_get(message):
+            connectionSocket.send(method_not_allowed.encode())
             connectionSocket.close()
             continue
 
