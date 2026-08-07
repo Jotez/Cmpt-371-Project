@@ -5,7 +5,7 @@ from socket import *
 #http://192.168.0.17:12000/test.html
 TEST_DATE = "Tue, 28 Jul 2026 18:14:00 GMT"
 TEST_VERSION = "HTTP/1.1"
-
+forbidden_files = ["main.py",".gitignore",".git"]
 #responses
 forbidden = ( "HTTP/1.1 403 Forbidden\r\n"
     "Content-Type: text/html; charset=utf-8\r\n"
@@ -127,6 +127,11 @@ def main():
         #if True sends 200 ok with file. 
         #if False sends 404 not found
         (in_directory, name) = check_file(message)
+        if name in forbidden_files:
+            connectionSocket.send(forbidden.encode())
+            connectionSocket.close()
+            continue
+
         if in_directory:
             with open(name, "r", encoding= "utf-8") as file:
                 file_content = file.read()
